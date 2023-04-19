@@ -1,0 +1,23 @@
+#debug or release
+run_mode: "debug"
+app:
+  page_size: 10
+  jwt_secret: "1234$1234"
+  jwt_expires: 8
+server:
+  http_port: 8000
+  read_timeout: 60
+  write_timeout: 60
+database:
+  type: "mysql"
+  user: "root"
+  password: "root"
+  host: "localhost:3306"
+  name: "chat"
+  table_prefix: "chat_"
+redis:
+  host: "localhost:6379"
+  password: ""
+  max_idle: 30
+  max_active: 30
+  idle_timeout: 180

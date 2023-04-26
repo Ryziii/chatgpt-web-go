@@ -21,3 +21,10 @@ redis:
   max_idle: 30
   max_active: 30
   idle_timeout: 180
+gpt:
+  token: sk-******
+  top_p: 1
+  temperature: 0.8
+  systemMessage: ""
+  maxToken: 10
+  openai_api_model: ""

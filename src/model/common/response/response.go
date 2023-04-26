@@ -10,15 +10,11 @@ type Response struct {
 }
 
 func (r *Response) WithMessage(msg string) *Response {
-	r.Code = 200
-	r.Status = "Success"
 	r.Message = msg
 	return r
 }
 
 func (r *Response) WithData(data interface{}) *Response {
-	r.Code = 200
-	r.Status = "Success"
 	r.Data = data
 	return r
 }

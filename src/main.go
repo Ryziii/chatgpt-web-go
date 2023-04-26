@@ -8,10 +8,11 @@ import (
 )
 
 func main() {
-	initialize.ViperInit()
-	initialize.GormMysqlInit()
+	initialize.InitViper()
+	initialize.InitGormMysql()
 	initialize.InitZap()
 	initialize.InitRedis()
+	initialize.InitGPT()
 	handler := routes.InitApiRoutes()
 	server := &http.Server{
 		Addr:    ":3002",

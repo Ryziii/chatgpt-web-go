@@ -3,18 +3,13 @@ package redis
 import (
 	"chatgpt-web-go/src/global"
 	"context"
-	"encoding/json"
 	"time"
 )
 
 var ctx = context.Background()
 
 func Set(key string, data interface{}, exTime time.Duration) error {
-	value, err := json.Marshal(data)
-	if err != nil {
-		return err
-	}
-	err = global.Gredis.SetNX(ctx, key, value, exTime).Err()
+	err := global.Gredis.SetNX(ctx, key, data, exTime).Err()
 	if err != nil {
 		return err
 	}

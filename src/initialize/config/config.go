@@ -10,6 +10,7 @@ type Config struct {
 	App      App      `mapstructure:"app"`
 	Database Database `mapstructure:"database"`
 	Redis    Redis    `mapstructure:"redis"`
+	GPT      GPT      `mapstructure:"gpt"`
 }
 type Server struct {
 	HTTPPort     int           `mapstructure:"http_port"`
@@ -38,4 +39,13 @@ type Redis struct {
 	MaxIdle     int           `mapstructure:"max_idle"`
 	MaxActive   int           `mapstructure:"max_active"`
 	IdleTimeout time.Duration `mapstructure:"idle_timeout" metadata:"idle_timeout"`
+}
+
+type GPT struct {
+	Token          string  `mapstructure:"token"`
+	TopP           float32 `mapstructure:"top_p"`
+	SystemMessage  string  `mapstructure:"systemMessage"`
+	Temperature    float32 `mapstructure:"temperature"`
+	MaxToken       int     `mapstructure:"max_token"`
+	OpenAIAPIMODEL string  `mapstructure:"openai_api_model"`
 }

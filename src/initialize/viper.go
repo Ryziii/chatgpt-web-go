@@ -2,12 +2,14 @@ package initialize
 
 import (
 	"chatgpt-web-go/src/global"
+	"chatgpt-web-go/src/initialize/config"
+	"github.com/sashabaranov/go-openai"
 	"github.com/spf13/viper"
 	"reflect"
 	"time"
 )
 
-func ViperInit() {
+func InitViper() {
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(".")
@@ -19,6 +21,7 @@ func ViperInit() {
 	if err != nil {
 		panic(err)
 	}
+	afterHandler(global.Cfg)
 }
 
 func intToTimeDurationSecondHookFunc(f reflect.Type, t reflect.Type, data interface{}) (interface{}, error) {
@@ -28,7 +31,12 @@ func intToTimeDurationSecondHookFunc(f reflect.Type, t reflect.Type, data interf
 	if t == reflect.TypeOf(time.Duration(5)) {
 		return time.Duration(data.(int)) * time.Second, nil
 	}
-
 	// Convert it by parsing
 	return data, nil
+}
+
+func afterHandler(cfg *config.Config) {
+	if cfg.GPT.OpenAIAPIMODEL == "" {
+		cfg.GPT.OpenAIAPIMODEL = openai.GPT3Dot5Turbo0301
+	}
 }

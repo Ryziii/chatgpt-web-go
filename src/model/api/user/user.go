@@ -13,3 +13,7 @@ type User struct {
 	Usage    setting.Usage    `json:"usage" gorm:"type:text"`
 	Advanced setting.Advanced `json:"advanced" gorm:"type:text"`
 }
+
+func (User) TableName() string {
+	return "chat_user"
+}

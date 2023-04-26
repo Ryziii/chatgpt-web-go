@@ -1,7 +1,9 @@
 package auth
 
 import (
+	"chatgpt-web-go/src/global"
 	"chatgpt-web-go/src/model/api"
+	"chatgpt-web-go/src/model/api/auth"
 	"chatgpt-web-go/src/model/api/user/request"
 	"chatgpt-web-go/src/model/api/user/response"
 	result "chatgpt-web-go/src/model/common/response"
@@ -11,7 +13,6 @@ import (
 )
 
 func GetSession(c *gin.Context) {
-	c.SetCookie("name", "123", 3600, "/", "localhost", false, false)
 	c.JSON(http.StatusOK, result.OK.WithData(
 		api.Session{
 			Auth:  false,
@@ -23,12 +24,36 @@ func GetSession(c *gin.Context) {
 func Login(c *gin.Context) {
 	requestP := request.User{}
 	if err := c.ShouldBindJSON(&requestP); err != nil {
-		c.JSON(http.StatusBadRequest, result.Fail.WithData(err.Error()))
+		c.JSON(http.StatusOK, result.Fail.WithData(err.Error()))
 		return
 	}
 	if token, err := service.Login(requestP.Username, requestP.Password); err != nil {
-		c.JSON(http.StatusBadRequest, result.Fail.WithData(err.Error()))
+		switch err.(type) {
+		case *global.SystemError:
+			c.JSON(http.StatusOK, result.Fail.WithMessage("系统错误"))
+		default:
+			c.JSON(http.StatusOK, result.Fail.WithMessage("登录失败, 用户名或密码错误"))
+		}
 	} else {
 		c.JSON(http.StatusOK, result.OK.WithData(response.LoginResponse{Token: token}))
+	}
+}
+
+func Logout(c *gin.Context) {
+	requestP := auth.Logout{}
+	c.SetCookie("token", "", -1, "/", "", false, false)
+	if err := c.ShouldBindJSON(&requestP); err != nil {
+		c.JSON(http.StatusOK, result.Fail.WithData(err.Error()))
+		return
+	}
+	if _, err := service.Logout(requestP.Token); err != nil {
+		switch err.(type) {
+		case *global.SystemError:
+			c.JSON(http.StatusOK, result.Fail.WithMessage("系统错误"))
+		default:
+			c.JSON(http.StatusOK, result.Fail.WithMessage("登录失败, 用户名或密码错误"))
+		}
+	} else {
+		c.JSON(http.StatusOK, result.OK)
 	}
 }

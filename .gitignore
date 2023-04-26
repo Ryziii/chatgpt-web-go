@@ -22,5 +22,5 @@
 go.work
 
 /.idea
-/src/config.yaml
+/config.yaml
 /go.sum

@@ -25,7 +25,10 @@ func (s *chatRoomService) CreateChatRoom(chatMessageDO *gpt2.ChatMessageDO) (gpt
 		FirstChatMessageID: chatMessageDO.ID,
 		ConversationID:     chatMessageDO.ConversationID,
 		FirstMessageID:     uuid.New().String(),
-		Title:              chatMessageDO.Content[:int(math.Min(float64(len(chatMessageDO.Content)), 50))],
+		Title: func() string {
+			ru := []rune(chatMessageDO.Content)
+			return string(ru[:int(math.Min(float64(len(ru)), 50))])
+		}(),
 	}
 
 	err := s.chatRoomRepo.CreateChatRoom(&chatRoom)

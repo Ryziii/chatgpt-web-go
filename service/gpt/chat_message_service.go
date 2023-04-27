@@ -10,7 +10,6 @@ import (
 	"github.com/bwmarrin/snowflake"
 	"github.com/google/uuid"
 	"github.com/sashabaranov/go-openai"
-	"go.uber.org/zap"
 )
 
 type ChatMessageService interface {
@@ -155,7 +154,6 @@ func (s *chatMessageService) addContextChatMessage(chatMessageDO *gpt3.ChatMessa
 func (s *chatMessageService) GetOpenAiRequestReady(req request.ChatProcessRequest) (gpt3.ChatMessageDO, openai.ChatCompletionRequest, error) {
 	var chatMessageDO gpt3.ChatMessageDO
 	var completionRequest openai.ChatCompletionRequest
-	global.Gzap.Info("chatMessageDO.ID", zap.Any("chatMessageDO.ID", chatMessageDO.ID))
 	if err := s.InitChatMessage(&chatMessageDO, req, gpt2.ApiKey); err != nil {
 		return chatMessageDO, completionRequest, err
 	}

@@ -31,6 +31,7 @@ type Database struct {
 	Host        string `mapstructure:"host"`
 	Name        string `mapstructure:"name"`
 	TablePrefix string `mapstructure:"table_prefix"`
+	LogMode     bool   `mapstructure:"log_mode"`
 }
 
 type Redis struct {

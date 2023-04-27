@@ -27,7 +27,13 @@ func InitGormMysql() {
 		NamingStrategy: schema.NamingStrategy{
 			SingularTable: true,
 		},
-		Logger: logger.Default.LogMode(logger.Info),
+		Logger: func() logger.Interface {
+			if global.Cfg.Database.LogMode {
+				return logger.Default.LogMode(logger.Info)
+			} else {
+				return logger.Default
+			}
+		}(),
 	})
 	if err != nil {
 		fmt.Println(err)

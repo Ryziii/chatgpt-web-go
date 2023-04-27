@@ -15,6 +15,7 @@ database:
   host: "localhost:3306"
   name: "chat"
   table_prefix: "chat_"
+  log_mode: false
 redis:
   host: "localhost:6379"
   password: ""

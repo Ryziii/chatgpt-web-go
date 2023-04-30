@@ -6,6 +6,7 @@ import (
 	"chatgpt-web-go/utils"
 	"chatgpt-web-go/utils/redis"
 	"github.com/gin-gonic/gin"
+	"github.com/samber/lo"
 	"net/http"
 )
 
@@ -16,6 +17,7 @@ func JWTAuth() gin.HandlerFunc {
 			return
 		}
 		token, _ := c.Cookie("token")
+		token = lo.Ternary(token == "", c.GetHeader("Token"), token)
 		if token == "" {
 			c.JSON(http.StatusUnauthorized, result.NotAuth)
 			return

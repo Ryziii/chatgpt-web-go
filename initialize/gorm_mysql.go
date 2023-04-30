@@ -50,9 +50,9 @@ func registerCallbacks() {
 }
 func updateTimeStampForCreateCallback(db *gorm.DB) {
 	if db.Error == nil && db.Statement.Schema != nil {
-		if idValue, ok := db.Statement.ReflectValue.FieldByName("ID").Interface().(uint64); ok && idValue == 0 {
+		if idValue, ok := db.Statement.ReflectValue.FieldByName("Id").Interface().(uint64); ok && idValue == 0 {
 			node, _ := snowflake.NewNode(1)
-			db.Statement.SetColumn("ID", node.Generate().Int64())
+			db.Statement.SetColumn("Id", node.Generate().Int64())
 		}
 		db.Statement.SetColumn("UpdateTime", time.Now().Format("2006-01-02 15:04:05"))
 		db.Statement.SetColumn("CreateTime", time.Now().Format("2006-01-02 15:04:05"))

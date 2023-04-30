@@ -2,20 +2,21 @@ package gpt
 
 import (
 	gpt2 "chatgpt-web-go/global/enum/gpt"
+	"chatgpt-web-go/model/common"
 	"fmt"
 )
 
-type ChatMessageDO struct {
-	Model
-	MessageID               string
-	ParentMessageID         string
-	ParentAnswerMessageID   string
-	ParentQuestionMessageID string
+type ChatMessage struct {
+	common.Model
+	MessageId               string
+	ParentMessageId         string
+	ParentAnswerMessageId   string
+	ParentQuestionMessageId string
 	ContextCount            int
 	QuestionContextCount    int
 	MessageType             gpt2.ChatMessageTypeEnum
-	ChatRoomID              uint64
-	ConversationID          string
+	ChatRoomId              uint64
+	ConversationId          string
 	APIType                 gpt2.ApiTypeEnum
 	ModelName               string
 	IP                      string
@@ -30,21 +31,21 @@ type ChatMessageDO struct {
 	IsHide                  bool
 }
 
-func (ChatMessageDO) TableName() string {
+func (ChatMessage) TableName() string {
 	return "chat_message"
 }
 
-func (c ChatMessageDO) ToString() string {
-	return fmt.Sprintf("ID: %d\n "+
-		"MessageID: %s\n "+
-		"ParentMessageID: %s\n "+
-		"ParentAnswerMessageID: %s\n "+
-		"ParentQuestionMessageID: %s\n "+
+func (c ChatMessage) ToString() string {
+	return fmt.Sprintf("Id: %d\n "+
+		"MessageId: %s\n "+
+		"ParentMessageId: %s\n "+
+		"ParentAnswerMessageId: %s\n "+
+		"ParentQuestionMessageId: %s\n "+
 		"ContextCount: %d\n "+
 		"QuestionContextCount: %d\n "+
 		"MessageType: %s\n "+
-		"ChatRoomID: %d\n "+
-		"ConversationID: %s\n "+
+		"ChatRoomId: %d\n "+
+		"ConversationId: %s\n "+
 		"APIType: %s\n "+
 		"ModelName: %s\n "+
 		"IP: %s\n "+
@@ -58,5 +59,5 @@ func (c ChatMessageDO) ToString() string {
 		"Status: %s\n "+
 		"IsHide: %t\n "+
 		"CreatedTime: %s\n "+
-		"UpdatedTime: %s\n", c.ID, c.MessageID, c.ParentMessageID, c.ParentAnswerMessageID, c.ParentQuestionMessageID, c.ContextCount, c.QuestionContextCount, c.MessageType, c.ChatRoomID, c.ConversationID, c.APIType, c.ModelName, c.IP, c.APIKey, c.Content, c.OriginalData, c.ResponseErrorData, c.PromptTokens, c.CompletionTokens, c.TotalTokens, c.Status, c.IsHide, c.CreateTime, c.UpdateTime)
+		"UpdatedTime: %s\n", c.Id, c.MessageId, c.ParentMessageId, c.ParentAnswerMessageId, c.ParentQuestionMessageId, c.ContextCount, c.QuestionContextCount, c.MessageType, c.ChatRoomId, c.ConversationId, c.APIType, c.ModelName, c.IP, c.APIKey, c.Content, c.OriginalData, c.ResponseErrorData, c.PromptTokens, c.CompletionTokens, c.TotalTokens, c.Status, c.IsHide, c.CreateTime, c.UpdateTime)
 }

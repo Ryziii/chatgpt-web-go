@@ -14,7 +14,7 @@ func VerifyPassword(username, password string) (bool, error) {
 	if e != nil {
 		return false, e
 	}
-	if user.ID == 0 {
+	if user.Id == 0 {
 		return false, errors.New("user not found")
 	}
 	if utils.MD5(utils.MD5(password)) != user.Password {

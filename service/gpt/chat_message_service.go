@@ -5,6 +5,7 @@ import (
 	enum "chatgpt-web-go/global/enum/gpt"
 	model "chatgpt-web-go/model/api/gpt"
 	"chatgpt-web-go/model/api/gpt/request"
+	"chatgpt-web-go/model/common"
 	"chatgpt-web-go/repository"
 	"chatgpt-web-go/utils"
 	"encoding/json"
@@ -15,8 +16,8 @@ import (
 )
 
 type ChatMessageService interface {
-	GetOpenAiRequestReady(req request.ChatProcessRequest) (model.ChatMessageDO, openai.ChatCompletionRequest, error)
-	SaveQuestionDOFromChatMessageDO(string, model.ChatMessageDO, openai.ChatCompletionRequest) error
+	GetOpenAiRequestReady(req request.ChatProcessRequest) (model.ChatMessage, openai.ChatCompletionRequest, error)
+	SaveQuestionDOFromChatMessage(string, model.ChatMessage, openai.ChatCompletionRequest) error
 }
 
 type chatMessageService struct {
@@ -31,8 +32,8 @@ func NewChatMessageService() ChatMessageService {
 	}
 }
 
-func (s *chatMessageService) SaveQuestionDOFromChatMessageDO(ip string, chatMessageDO model.ChatMessageDO, completionRequest openai.ChatCompletionRequest) error {
-	var questionDO model.ChatMessageDO
+func (s *chatMessageService) SaveQuestionDOFromChatMessage(ip string, chatMessageDO model.ChatMessage, completionRequest openai.ChatCompletionRequest) error {
+	var questionDO model.ChatMessage
 	if err := utils.DeepCopyByJson(&chatMessageDO, &questionDO); err != nil {
 		return err
 	}
@@ -45,22 +46,22 @@ func (s *chatMessageService) SaveQuestionDOFromChatMessageDO(ip string, chatMess
 	questionDO.PromptTokens = s.TotalToken
 	questionDO.Status = enum.PART_SUCCESS
 	questionDO.MessageType = enum.QUESTION
-	questionDO.ParentAnswerMessageID = questionDO.ParentMessageID
+	questionDO.ParentAnswerMessageId = questionDO.ParentMessageId
 	if err := s.chatMessageRepo.CreateChatMessage(&questionDO); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (s *chatMessageService) initChatMessageDO(chatMessageDO *model.ChatMessageDO, chatProcessRequest request.ChatProcessRequest, apiTypeEnum enum.ApiTypeEnum) error {
-	*chatMessageDO = model.ChatMessageDO{
-		Model: model.Model{ID: uint64(func() int64 {
+func (s *chatMessageService) initChatMessage(chatMessageDO *model.ChatMessage, chatProcessRequest request.ChatProcessRequest, apiTypeEnum enum.ApiTypeEnum) error {
+	*chatMessageDO = model.ChatMessage{
+		Model: common.Model{Id: uint64(func() int64 {
 			snowNode, _ := snowflake.NewNode(1)
 			id := snowNode.Generate().Int64()
 			return id
 		}())},
-		MessageID:        uuid.New().String(),
-		ConversationID:   uuid.New().String(),
+		MessageId:        uuid.New().String(),
+		ConversationId:   uuid.New().String(),
 		MessageType:      enum.QUESTION,
 		APIType:          apiTypeEnum,
 		Content:          chatProcessRequest.Prompt,
@@ -80,26 +81,26 @@ func (s *chatMessageService) initChatMessageDO(chatMessageDO *model.ChatMessageD
 	return nil
 }
 
-func (s *chatMessageService) populateInitParentMessage(chatMessageDO *model.ChatMessageDO, chatProcessRequest request.ChatProcessRequest) error {
-	parentMessageID := chatProcessRequest.Options.ParentMessageID
-	conversationID := chatProcessRequest.Options.ConversationID
+func (s *chatMessageService) populateInitParentMessage(chatMessageDO *model.ChatMessage, chatProcessRequest request.ChatProcessRequest) error {
+	parentMessageId := chatProcessRequest.Options.ParentMessageId
+	conversationId := chatProcessRequest.Options.ConversationId
 
-	if parentMessageID != "" && conversationID != "" {
-		parentChatMessage := model.ChatMessageDO{}
-		err := s.chatMessageRepo.GetOne(&parentChatMessage, model.ChatMessageDO{
-			MessageID:      parentMessageID,
-			ConversationID: conversationID,
+	if parentMessageId != "" && conversationId != "" {
+		parentChatMessage := model.ChatMessage{}
+		err := s.chatMessageRepo.GetOne(&parentChatMessage, model.ChatMessage{
+			MessageId:      parentMessageId,
+			ConversationId: conversationId,
 			APIType:        chatMessageDO.APIType,
 			MessageType:    enum.ANSWER,
 		})
-		if err != nil || parentChatMessage == (model.ChatMessageDO{}) {
+		if err != nil || parentChatMessage == (model.ChatMessage{}) {
 			return errors.New("系统出错, 无法找到聊天记录. 请尝试关闭输入框左边的携带聊天记录按钮后重试, 或新建聊天.")
 		}
-		chatMessageDO.ParentMessageID = parentMessageID
-		chatMessageDO.ConversationID = conversationID
-		chatMessageDO.ParentAnswerMessageID = parentMessageID
-		chatMessageDO.ParentQuestionMessageID = parentChatMessage.ParentQuestionMessageID
-		chatMessageDO.ChatRoomID = parentChatMessage.ChatRoomID
+		chatMessageDO.ParentMessageId = parentMessageId
+		chatMessageDO.ConversationId = conversationId
+		chatMessageDO.ParentAnswerMessageId = parentMessageId
+		chatMessageDO.ParentQuestionMessageId = parentChatMessage.ParentQuestionMessageId
+		chatMessageDO.ChatRoomId = parentChatMessage.ChatRoomId
 		chatMessageDO.ContextCount = parentChatMessage.ContextCount + 1
 		chatMessageDO.QuestionContextCount = parentChatMessage.QuestionContextCount + 1
 	} else {
@@ -108,22 +109,22 @@ func (s *chatMessageService) populateInitParentMessage(chatMessageDO *model.Chat
 		if err != nil {
 			return err
 		}
-		chatMessageDO.ChatRoomID = chatRoomDO.ID
+		chatMessageDO.ChatRoomId = chatRoomDO.Id
 		chatMessageDO.ContextCount = 1
 		chatMessageDO.QuestionContextCount = 1
 	}
 	return nil
 }
 
-func (s *chatMessageService) addContextChatMessage(chatMessageDO *model.ChatMessageDO, messages *[]openai.ChatCompletionMessage) {
+func (s *chatMessageService) addContextChatMessage(chatMessageDO *model.ChatMessage, messages *[]openai.ChatCompletionMessage) {
 	if chatMessageDO == nil {
 		return
 	}
 
-	var processMessage func(chatMessageDO *model.ChatMessageDO)
-	processMessage = func(chatMessageDO *model.ChatMessageDO) {
+	var processMessage func(chatMessageDO *model.ChatMessage)
+	processMessage = func(chatMessageDO *model.ChatMessage) {
 		// 没有父消息, 说明是第一条消息, 直接返回
-		if chatMessageDO.ParentMessageID == "" {
+		if chatMessageDO.ParentMessageId == "" {
 			message := openai.ChatCompletionMessage{
 				Role:    openai.ChatMessageRoleUser,
 				Content: chatMessageDO.Content,
@@ -137,12 +138,12 @@ func (s *chatMessageService) addContextChatMessage(chatMessageDO *model.ChatMess
 		}
 		// 如果是回答, 但是状态不是成功, 寻找上一个回答
 		if chatMessageDO.MessageType == enum.ANSWER && (chatMessageDO.Status != enum.PART_SUCCESS && chatMessageDO.Status != enum.COMPLETE_SUCCESS) {
-			if chatMessageDO.ParentAnswerMessageID == "" {
+			if chatMessageDO.ParentAnswerMessageId == "" {
 				return
 			}
-			parentMessage := model.ChatMessageDO{}
-			if err := s.chatMessageRepo.GetOne(&parentMessage, model.ChatMessageDO{
-				MessageID: chatMessageDO.ParentAnswerMessageID,
+			parentMessage := model.ChatMessage{}
+			if err := s.chatMessageRepo.GetOne(&parentMessage, model.ChatMessage{
+				MessageId: chatMessageDO.ParentAnswerMessageId,
 			}); err != nil {
 				return
 			}
@@ -164,9 +165,9 @@ func (s *chatMessageService) addContextChatMessage(chatMessageDO *model.ChatMess
 			return
 		}
 		*messages = append([]openai.ChatCompletionMessage{message}, *messages...)
-		parentMessage := model.ChatMessageDO{}
-		if err := s.chatMessageRepo.GetOne(&parentMessage, model.ChatMessageDO{
-			MessageID: chatMessageDO.ParentMessageID,
+		parentMessage := model.ChatMessage{}
+		if err := s.chatMessageRepo.GetOne(&parentMessage, model.ChatMessage{
+			MessageId: chatMessageDO.ParentMessageId,
 		}); err != nil {
 			return
 		}
@@ -177,11 +178,11 @@ func (s *chatMessageService) addContextChatMessage(chatMessageDO *model.ChatMess
 	processMessage(chatMessageDO)
 }
 
-func (s *chatMessageService) GetOpenAiRequestReady(req request.ChatProcessRequest) (model.ChatMessageDO, openai.ChatCompletionRequest, error) {
+func (s *chatMessageService) GetOpenAiRequestReady(req request.ChatProcessRequest) (model.ChatMessage, openai.ChatCompletionRequest, error) {
 	//s.TotalToken = 0
-	var chatMessageDO model.ChatMessageDO
+	var chatMessageDO model.ChatMessage
 	var completionRequest openai.ChatCompletionRequest
-	if err := s.initChatMessageDO(&chatMessageDO, req, enum.ApiKey); err != nil {
+	if err := s.initChatMessage(&chatMessageDO, req, enum.ApiKey); err != nil {
 		return chatMessageDO, completionRequest, err
 	}
 

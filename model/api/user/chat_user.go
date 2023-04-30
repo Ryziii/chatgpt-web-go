@@ -2,11 +2,11 @@ package user
 
 import (
 	setting2 "chatgpt-web-go/model/api/user/setting"
-	"gorm.io/gorm"
+	"chatgpt-web-go/model/common"
 )
 
 type User struct {
-	gorm.Model
+	common.Model
 	Username string            `json:"username"`
 	Password string            `json:"password"`
 	General  setting2.General  `json:"general" gorm:"type:text"`

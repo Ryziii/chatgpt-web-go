@@ -2,18 +2,19 @@ package gpt
 
 import (
 	enum "chatgpt-web-go/global/enum/gpt"
+	"chatgpt-web-go/model/common"
 )
 
-type ChatRoomDO struct {
-	Model
-	ConversationID     string
+type ChatRoom struct {
+	common.Model
+	ConversationId     string
 	IP                 string
-	FirstChatMessageID uint64
-	FirstMessageID     string
+	FirstChatMessageId uint64
+	FirstMessageId     string
 	Title              string
 	ApiType            enum.ApiTypeEnum
 }
 
-func (ChatRoomDO) TableName() string {
+func (ChatRoom) TableName() string {
 	return "chat_room"
 }

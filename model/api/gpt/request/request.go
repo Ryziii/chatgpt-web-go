@@ -9,6 +9,6 @@ type ChatProcessRequest struct {
 }
 
 type ChatContext struct {
-	ConversationID  string `json:"conversationId,omitempty"`
-	ParentMessageID string `json:"parentMessageId,omitempty"`
+	ConversationId  string `json:"conversationId,omitempty"`
+	ParentMessageId string `json:"parentMessageId,omitempty"`
 }

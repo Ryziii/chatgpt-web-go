@@ -44,14 +44,14 @@ func GPT(c *gin.Context) {
 		return
 	}
 
-	if err := chatMessageService.SaveQuestionDOFromChatMessageDO(c.RemoteIP(), chatMessageDO, completionRequest); err != nil {
+	if err := chatMessageService.SaveQuestionDOFromChatMessage(c.RemoteIP(), chatMessageDO, completionRequest); err != nil {
 		c.AbortWithStatusJSON(http.StatusOK, result.Fail.WithMessage(err.Error()))
 		return
 	}
 	// 存入request
 	chatMessageRepo := repository.NewChatMessageRepository()
-	var questionDO gptmodel.ChatMessageDO
-	var answerDO gptmodel.ChatMessageDO
+	var questionDO gptmodel.ChatMessage
+	var answerDO gptmodel.ChatMessage
 	if err := utils.DeepCopyByJson(&chatMessageDO, &questionDO); err != nil {
 		c.AbortWithStatusJSON(http.StatusOK, result.Fail.WithMessage(err.Error()))
 		return
@@ -68,12 +68,12 @@ func GPT(c *gin.Context) {
 	questionDO.PromptTokens = numTokens
 	questionDO.Status = enum.PART_SUCCESS
 	questionDO.MessageType = enum.QUESTION
-	questionDO.ParentAnswerMessageID = questionDO.ParentMessageID
+	questionDO.ParentAnswerMessageId = questionDO.ParentMessageId
 
-	answerDO.ID = uint64(utils.GetSnowIdInt64())
-	answerDO.MessageID = uuid.New().String()
-	answerDO.ParentMessageID = questionDO.MessageID
-	answerDO.ParentQuestionMessageID = questionDO.MessageID
+	answerDO.Id = uint64(utils.GetSnowIdInt64())
+	answerDO.MessageId = uuid.New().String()
+	answerDO.ParentMessageId = questionDO.MessageId
+	answerDO.ParentQuestionMessageId = questionDO.MessageId
 	chatMessageRepo.CreateChatMessage(&questionDO)
 
 	// 流式输出
@@ -131,10 +131,10 @@ func GPT(c *gin.Context) {
 			}
 			resText = resText + response.Choices[0].Delta.Content
 			chatReplyMessageVO := new(models.ChatReplyMessage)
-			chatReplyMessageVO.ID = answerDO.MessageID
+			chatReplyMessageVO.Id = answerDO.MessageId
 			chatReplyMessageVO.Role = ""
-			chatReplyMessageVO.ParentMessageID = answerDO.ParentMessageID
-			chatReplyMessageVO.ConversationID = answerDO.ConversationID
+			chatReplyMessageVO.ParentMessageId = answerDO.ParentMessageId
+			chatReplyMessageVO.ConversationId = answerDO.ConversationId
 			chatReplyMessageVO.Text = resText
 			re, _ := json.Marshal(chatReplyMessageVO)
 			if responseCount != 0 {

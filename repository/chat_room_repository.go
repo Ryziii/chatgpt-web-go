@@ -7,27 +7,27 @@ import (
 )
 
 type ChatRoomRepository interface {
-	GetOne(result *gpt.ChatRoomDO, source gpt.ChatRoomDO) error
-	CreateChatRoom(chatRoom *gpt.ChatRoomDO) error
-	UpdateChatRoom(chatRoom *gpt.ChatRoomDO) error
+	GetOne(result *gpt.ChatRoom, source gpt.ChatRoom) error
+	CreateChatRoom(chatRoom *gpt.ChatRoom) error
+	UpdateChatRoom(chatRoom *gpt.ChatRoom) error
 }
 
 func NewChatRoomRepository() ChatRoomRepository {
-	return &chatRoomRepository{db: global.Gdb.Model(&gpt.ChatRoomDO{})}
+	return &chatRoomRepository{db: global.Gdb.Model(&gpt.ChatRoom{})}
 }
 
 type chatRoomRepository struct {
 	db *gorm.DB
 }
 
-func (r *chatRoomRepository) CreateChatRoom(chatRoom *gpt.ChatRoomDO) error {
+func (r *chatRoomRepository) CreateChatRoom(chatRoom *gpt.ChatRoom) error {
 	return r.db.Create(chatRoom).Error
 }
 
-func (r *chatRoomRepository) UpdateChatRoom(chatRoom *gpt.ChatRoomDO) error {
+func (r *chatRoomRepository) UpdateChatRoom(chatRoom *gpt.ChatRoom) error {
 	return r.db.Model(chatRoom).Updates(chatRoom).Error
 }
 
-func (r *chatRoomRepository) GetOne(result *gpt.ChatRoomDO, source gpt.ChatRoomDO) error {
+func (r *chatRoomRepository) GetOne(result *gpt.ChatRoom, source gpt.ChatRoom) error {
 	return r.db.Where(source).First(result).Error
 }

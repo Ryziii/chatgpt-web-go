@@ -13,7 +13,7 @@ type ChatRoomRepository interface {
 }
 
 func NewChatRoomRepository() ChatRoomRepository {
-	return &chatRoomRepository{db: global.Gdb.Model(&gpt.ChatRoom{})}
+	return &chatRoomRepository{db: global.Gdb}
 }
 
 type chatRoomRepository struct {
@@ -21,13 +21,13 @@ type chatRoomRepository struct {
 }
 
 func (r *chatRoomRepository) CreateChatRoom(chatRoom *gpt.ChatRoom) error {
-	return r.db.Create(chatRoom).Error
+	return r.db.Model(gpt.ChatRoom{}).Create(chatRoom).Error
 }
 
 func (r *chatRoomRepository) UpdateChatRoom(chatRoom *gpt.ChatRoom) error {
-	return r.db.Model(chatRoom).Updates(chatRoom).Error
+	return r.db.Model(gpt.ChatRoom{}).Model(chatRoom).Updates(chatRoom).Error
 }
 
 func (r *chatRoomRepository) GetOne(result *gpt.ChatRoom, source gpt.ChatRoom) error {
-	return r.db.Where(source).First(result).Error
+	return r.db.Model(gpt.ChatRoom{}).Where(source).First(result).Error
 }

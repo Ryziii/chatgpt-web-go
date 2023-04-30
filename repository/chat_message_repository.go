@@ -11,7 +11,7 @@ type ChatMessageRepository interface {
 	CreateChatMessage(chatMessage *gpt.ChatMessage) error
 	UpdateChatMessage(chatMessage *gpt.ChatMessage) error
 	DeleteChatMessage(chatMessage *gpt.ChatMessage) error
-	GetChatMessageById(result *gpt.ChatMessage, id uint) error
+	GetChatMessageById(result *gpt.ChatMessage, id uint64) error
 }
 
 type chatMessageRepository struct {
@@ -19,27 +19,27 @@ type chatMessageRepository struct {
 }
 
 func NewChatMessageRepository() ChatMessageRepository {
-	return &chatMessageRepository{db: global.Gdb.Model(&gpt.ChatMessage{})}
+	return &chatMessageRepository{db: global.Gdb}
 }
 
 func (r *chatMessageRepository) GetOne(result *gpt.ChatMessage, source gpt.ChatMessage) error {
-	return r.db.Where(source).First(result).Error
+	return r.db.Model(gpt.ChatMessage{}).Where(source).First(result).Error
 }
 
 func (r *chatMessageRepository) CreateChatMessage(chatMessage *gpt.ChatMessage) error {
-	return global.Gdb.Create(chatMessage).Error
+	return r.db.Model(gpt.ChatMessage{}).Create(chatMessage).Error
 }
 
 func (r *chatMessageRepository) UpdateChatMessage(chatMessage *gpt.ChatMessage) error {
-	return global.Gdb.Model(chatMessage).Updates(chatMessage).Error
+	return r.db.Model(gpt.ChatMessage{}).Updates(chatMessage).Error
 }
 
 func (r *chatMessageRepository) DeleteChatMessage(chatMessage *gpt.ChatMessage) error {
-	return global.Gdb.Delete(chatMessage).Error
+	return r.db.Model(gpt.ChatMessage{}).Delete(chatMessage).Error
 }
 
-func (r *chatMessageRepository) GetChatMessageById(chatMessage *gpt.ChatMessage, id uint) (err error) {
-	if err := global.Gdb.Where("id = ?", id).First(chatMessage).Error; err != nil {
+func (r *chatMessageRepository) GetChatMessageById(chatMessage *gpt.ChatMessage, id uint64) (err error) {
+	if err := r.db.Model(gpt.ChatMessage{}).Where("id = ?", id).First(chatMessage).Error; err != nil {
 		return err
 	}
 	return nil

@@ -67,7 +67,12 @@ func (s *chatMessageService) GetOpenAiRequest(req request.ChatProcessRequest, co
 	}
 	// 递归conversation将上文填充进messages
 	var buildMessages func(conv *model.ChatConversation)
+	times := 0
 	buildMessages = func(conv *model.ChatConversation) {
+		times++
+		if global.Cfg.GPT.RecurveTimes == times {
+			return
+		}
 		if conv.Answer != nil && conv.Question != nil && (conv.Answer.Status == enum.PART_SUCCESS || conv.Answer.Status == enum.COMPLETE_SUCCESS) {
 			if err := addMessages(conv); err != nil {
 				return
@@ -76,10 +81,11 @@ func (s *chatMessageService) GetOpenAiRequest(req request.ChatProcessRequest, co
 		if conv.ParentId == 0 {
 			return
 		}
-		if err := s.chatConversationService.GetConversationById(conv.ParentId, conv); err != nil {
+		var parConv model.ChatConversation
+		if err := s.chatConversationService.GetConversationById(conv.ParentId, &parConv); err != nil {
 			return
 		}
-		buildMessages(conv)
+		buildMessages(&parConv)
 	}
 
 	reCon := new(model.ChatConversation)

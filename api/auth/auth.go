@@ -43,7 +43,7 @@ func Logout(c *gin.Context) {
 	requestP := auth.Logout{}
 	c.SetCookie("token", "", -1, "/", "", false, false)
 	if err := c.ShouldBindJSON(&requestP); err != nil {
-		c.JSON(http.StatusOK, result.Fail.WithData(err.Error()))
+		c.JSON(http.StatusOK, result.Fail.WithMessage(err.Error()))
 		return
 	}
 	if _, err := service.Logout(requestP.Token); err != nil {
@@ -51,7 +51,7 @@ func Logout(c *gin.Context) {
 		case *global.SystemError:
 			c.JSON(http.StatusOK, result.Fail.WithMessage("系统错误"))
 		default:
-			c.JSON(http.StatusOK, result.Fail.WithMessage("登录失败, 用户名或密码错误"))
+			c.JSON(http.StatusOK, result.Fail.WithMessage("登出失败"))
 		}
 	} else {
 		c.JSON(http.StatusOK, result.OK)

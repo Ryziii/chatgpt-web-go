@@ -7,6 +7,7 @@ require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gin-gonic/gin v1.9.0
 	github.com/google/uuid v1.3.0
+	github.com/jinzhu/copier v0.3.5
 	github.com/pkoukk/tiktoken-go v0.1.1-0.20230418101013-cae809389480
 	github.com/redis/go-redis/v9 v9.0.3
 	github.com/sashabaranov/go-openai v1.9.0

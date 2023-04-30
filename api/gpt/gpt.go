@@ -24,24 +24,28 @@ import (
 func ChatConversationProcess(c *gin.Context) {
 	c.Header("Content-type", "application/octet-stream")
 	var req request.ChatProcessRequest
-	if err := c.BindJSON(&req); err != nil {
+	if err := c.ShouldBindJSON(&req); err != nil {
 		c.AbortWithStatusJSON(http.StatusOK, result.Fail.WithMessage(err.Error()))
 		return
 	}
 
 	chatMessageService := gpt.NewChatMessageService()
 
-	// 组装chatCompletionMessages
+	//{
+	//	// TODO 通过conversation方式
+	//	chatConversationService := gpt.NewChatConversationService()
+	//	var chatConversation *gptmodel.ChatConversation
+	//
+	//	// 通过Conversation来判断是否是新的会话,获取会话
+	//	if err := chatConversationService.InitChatConversation(chatConversation, req); err != nil {
+	//		c.AbortWithStatusJSON(http.StatusOK, result.Fail.WithMessage(err.Error()))
+	//		return
+	//	}
+	//	chatMessageService.GetOpenAiRequest(req, chatConversation)
+	//}
 	chatMessageDO, completionRequest, err := chatMessageService.GetOpenAiRequestReady(req)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusOK, result.Fail.WithMessage(err.Error()))
-		return
-	}
-
-	// TODO 将此步骤放入
-	numTokens := utils.NumTokensFromMessages(completionRequest.Messages, openai.GPT3Dot5Turbo)
-	if numTokens+global.Cfg.GPT.MaxToken > 4000 {
-		c.AbortWithStatusJSON(http.StatusOK, result.Fail.WithMessage("上文聊天记录已超限, 请新建聊天或不携带聊天记录"))
 		return
 	}
 
@@ -66,7 +70,6 @@ func ChatConversationProcess(c *gin.Context) {
 		jsonV, _ := json.Marshal(completionRequest)
 		return string(jsonV)
 	}()
-	questionDO.PromptTokens = numTokens
 	questionDO.Status = enum.PART_SUCCESS
 	questionDO.MessageType = enum.QUESTION
 	questionDO.ParentAnswerMessageId = questionDO.ParentMessageId
@@ -95,7 +98,6 @@ func ChatConversationProcess(c *gin.Context) {
 				answerDO.Content = resText
 				answerDO.MessageType = enum.ANSWER
 				answerDO.Status = enum.COMPLETE_SUCCESS
-				answerDO.PromptTokens = numTokens
 				answerDO.CompletionTokens = utils.NumTokensFromText(resText, openai.GPT3Dot5Turbo)
 				answerDO.TotalTokens = answerDO.PromptTokens + answerDO.CompletionTokens
 

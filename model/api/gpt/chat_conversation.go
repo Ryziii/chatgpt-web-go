@@ -7,12 +7,12 @@ import (
 type ChatConversation struct {
 	common.Model
 	QuestionId uint64
-	Question   ChatMessage `json:"-" gorm:"foreignKey:QuestionId;references:Id"`
+	Question   *ChatMessage `json:"-" gorm:"foreignKey:QuestionId;references:Id"`
 	AnswerId   uint64
-	Answer     ChatMessage `json:"-" gorm:"foreignKey:AnswerId;references:Id"`
+	Answer     *ChatMessage `json:"-" gorm:"foreignKey:AnswerId;references:Id"`
 	ChatRoomId uint64
-	ChatRoom   ChatRoom `json:"-" gorm:"foreignKey:ChatRoomId;references:Id"`
-	ParentId   uint64   `gorm:"column:parent_conversation_id"`
+	ChatRoom   *ChatRoom `json:"-" gorm:"foreignKey:ChatRoomId;references:Id"`
+	ParentId   uint64    `gorm:"column:parent_conversation_id"`
 }
 
 func (ChatConversation) TableName() string {

@@ -12,22 +12,102 @@ import (
 	"errors"
 	"github.com/google/uuid"
 	"github.com/sashabaranov/go-openai"
+	"go.uber.org/zap"
 )
 
 type ChatMessageService interface {
 	GetOpenAiRequestReady(req request.ChatProcessRequest) (model.ChatMessage, openai.ChatCompletionRequest, error)
 	SaveQuestionDOFromChatMessage(string, model.ChatMessage, openai.ChatCompletionRequest) error
+	GetOpenAiRequest(req request.ChatProcessRequest, conversation *model.ChatConversation) (openai.ChatCompletionRequest, error)
 }
 
 type chatMessageService struct {
-	TotalToken      int
-	chatMessageRepo repository.ChatMessageRepository
+	TotalToken              int
+	SystemMessage           openai.ChatCompletionMessage
+	chatMessageRepo         repository.ChatMessageRepository
+	chatConversationService ChatConversationService
+}
+
+func (s *chatMessageService) GetOpenAiRequest(req request.ChatProcessRequest, conversation *model.ChatConversation) (openai.ChatCompletionRequest, error) {
+	var completionRequest openai.ChatCompletionRequest
+	var messages []openai.ChatCompletionMessage
+	thisReqMessage := openai.ChatCompletionMessage{
+		Role:    openai.ChatMessageRoleUser,
+		Content: req.Prompt,
+	}
+	messages = append(messages, thisReqMessage)
+
+	// 添加问答进message并校验是否超token
+	addMessages := func(conv *model.ChatConversation) error {
+		var rem []openai.ChatCompletionMessage
+		question := openai.ChatCompletionMessage{
+			Role:    openai.ChatMessageRoleUser,
+			Content: conv.Question.Content,
+		}
+		answer := openai.ChatCompletionMessage{
+			Role:    openai.ChatMessageRoleAssistant,
+			Content: conv.Answer.Content,
+		}
+		rem = append(rem, answer)
+		if !s.updateTotalTokens(utils.NumTokensFromMessages(rem, openai.GPT3Dot5Turbo)) {
+			return errors.New("totalToken不足")
+		}
+		messages = append([]openai.ChatCompletionMessage{answer}, messages...)
+		if !s.updateTotalTokens(utils.NumTokensFromMessages(rem, openai.GPT3Dot5Turbo)) {
+			return errors.New("totalToken不足")
+		}
+		messages = append([]openai.ChatCompletionMessage{question}, messages...)
+		return nil
+	}
+	// 递归conversation将上文填充进messages
+	var buildMessages func(conv *model.ChatConversation)
+	buildMessages = func(conv *model.ChatConversation) {
+		if conv.Answer != nil && conv.Question != nil && (conv.Answer.Status == enum.PART_SUCCESS || conv.Answer.Status == enum.COMPLETE_SUCCESS) {
+			if err := addMessages(conv); err != nil {
+				return
+			}
+		}
+		if conv.ParentId == 0 {
+			return
+		}
+		if err := s.chatConversationService.GetConversationById(conv.ParentId, conv); err != nil {
+			return
+		}
+		buildMessages(conv)
+	}
+
+	var reCon *model.ChatConversation
+	if err := utils.DeepCopy(conversation, reCon); err != nil {
+		global.Gzap.Error("buildMessages前深拷贝conversation错误", zap.Error(err))
+		return openai.ChatCompletionRequest{}, err
+	}
+	buildMessages(reCon)
+
+	messages = append([]openai.ChatCompletionMessage{s.SystemMessage}, messages...)
+	completionRequest = openai.ChatCompletionRequest{
+		Model:           global.Cfg.GPT.OpenAIAPIMODEL,
+		Messages:        messages,
+		MaxTokens:       global.Cfg.GPT.MaxToken,
+		Temperature:     global.Cfg.GPT.Temperature,
+		TopP:            global.Cfg.GPT.TopP,
+		N:               1,
+		Stream:          true,
+		PresencePenalty: 1,
+	}
+	numTokens := utils.NumTokensFromMessages(completionRequest.Messages, openai.GPT3Dot5Turbo)
+	if ok := s.updateTotalTokens(numTokens); !ok {
+		return completionRequest, nil
+	}
+
+	return completionRequest, nil
 }
 
 func NewChatMessageService() ChatMessageService {
 	return &chatMessageService{
-		chatMessageRepo: repository.NewChatMessageRepository(),
-		TotalToken:      global.Cfg.GPT.MaxToken,
+		chatMessageRepo:         repository.NewChatMessageRepository(),
+		chatConversationService: NewChatConversationService(),
+		SystemMessage:           getDefaultSystemMessage(),
+		TotalToken:              utils.NumTokensFromMessages([]openai.ChatCompletionMessage{getDefaultSystemMessage()}, openai.GPT3Dot5Turbo) + global.Cfg.GPT.MaxToken,
 	}
 }
 
@@ -182,7 +262,7 @@ func (s *chatMessageService) GetOpenAiRequestReady(req request.ChatProcessReques
 	}
 
 	var messages []openai.ChatCompletionMessage
-	systemMessage := openai.ChatCompletionMessage{Role: openai.ChatMessageRoleSystem, Content: "As an all-knowing and omnipotent assistant, you understand everything and can answer any question or solve any problem. Please provide concise, accurate, and brief answers in Chinese."}
+	systemMessage := s.SystemMessage
 	token := utils.NumTokensFromMessages([]openai.ChatCompletionMessage{systemMessage}, openai.GPT3Dot5Turbo)
 	s.updateTotalTokens(token)
 
@@ -213,4 +293,8 @@ func (s *chatMessageService) updateTotalTokens(tokens int) bool {
 		return false
 	}
 	return true
+}
+
+func getDefaultSystemMessage() openai.ChatCompletionMessage {
+	return openai.ChatCompletionMessage{Role: openai.ChatMessageRoleSystem, Content: "As an all-knowing and omnipotent assistant, you understand everything and can answer any question or solve any problem. Please provide concise, accurate, and brief answers in Chinese."}
 }

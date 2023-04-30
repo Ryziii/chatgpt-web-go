@@ -4,6 +4,7 @@ type ChatMessageStatusEnum int
 
 const (
 	INIT ChatMessageStatusEnum = iota
+
 	PART_SUCCESS
 
 	COMPLETE_SUCCESS

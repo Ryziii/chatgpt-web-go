@@ -11,7 +11,7 @@ type ChatConversationRepository interface {
 	CreateChatConversation(chatConversation *gpt.ChatConversation) error
 	UpdateChatConversation(chatConversation *gpt.ChatConversation) error
 	DeleteChatConversation(chatConversation *gpt.ChatConversation) error
-	GetChatConversationById(chatConversation *gpt.ChatConversation, id uint) error
+	GetChatConversationById(chatConversation *gpt.ChatConversation, id uint64) error
 	GetChatConversationByQuery(chatConversation *gpt.ChatConversation, query map[string]interface{}) error
 }
 
@@ -24,7 +24,11 @@ func NewChatConversationRepository() ChatConversationRepository {
 }
 
 func (r *chatConversationRepository) GetOne(result *gpt.ChatConversation, source gpt.ChatConversation) error {
-	return r.db.Where(source).First(result).Error
+	return r.db.
+		Preload("Question").
+		Preload("Answer").
+		Preload("ChatRoom").
+		Where(source).First(result).Error
 }
 
 func (r *chatConversationRepository) CreateChatConversation(chatConversation *gpt.ChatConversation) error {
@@ -32,20 +36,29 @@ func (r *chatConversationRepository) CreateChatConversation(chatConversation *gp
 }
 
 func (r *chatConversationRepository) UpdateChatConversation(chatConversation *gpt.ChatConversation) error {
-	return r.db.Model(chatConversation).Updates(chatConversation).Error
+	return r.db.Updates(chatConversation).Error
 }
 
 func (r *chatConversationRepository) DeleteChatConversation(chatConversation *gpt.ChatConversation) error {
 	return r.db.Delete(chatConversation).Error
 }
 
-func (r *chatConversationRepository) GetChatConversationById(chatConversation *gpt.ChatConversation, id uint) error {
-	if err := global.Gdb.Where("id = ?", id).First(chatConversation).Error; err != nil {
+func (r *chatConversationRepository) GetChatConversationById(chatConversation *gpt.ChatConversation, id uint64) error {
+	if err := r.db.
+		Preload("Question").
+		Preload("Answer").
+		Preload("ChatRoom").
+		Where("id = ?", id).
+		First(chatConversation).Error; err != nil {
 		return err
 	}
 	return nil
 }
 
 func (r *chatConversationRepository) GetChatConversationByQuery(chatConversation *gpt.ChatConversation, query map[string]interface{}) error {
-	return r.db.Where(query).First(chatConversation).Error
+	return r.db.
+		Preload("Question").
+		Preload("Answer").
+		Preload("ChatRoom").
+		Where(query).First(chatConversation).Error
 }

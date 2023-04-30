@@ -54,6 +54,6 @@ func Logout(c *gin.Context) {
 			c.JSON(http.StatusOK, result.Fail.WithMessage("登出失败"))
 		}
 	} else {
-		c.JSON(http.StatusOK, result.OK)
+		c.JSON(http.StatusOK, result.OK.WithMessage("登出成功"))
 	}
 }

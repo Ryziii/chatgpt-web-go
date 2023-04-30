@@ -70,7 +70,7 @@ func GPT(c *gin.Context) {
 	questionDO.MessageType = enum.QUESTION
 	questionDO.ParentAnswerMessageId = questionDO.ParentMessageId
 
-	answerDO.Id = uint64(utils.GetSnowIdInt64())
+	answerDO.Id = utils.GetSnowIdUint64()
 	answerDO.MessageId = uuid.New().String()
 	answerDO.ParentMessageId = questionDO.MessageId
 	answerDO.ParentQuestionMessageId = questionDO.MessageId

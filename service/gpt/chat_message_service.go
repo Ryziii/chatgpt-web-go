@@ -10,7 +10,6 @@ import (
 	"chatgpt-web-go/utils"
 	"encoding/json"
 	"errors"
-	"github.com/bwmarrin/snowflake"
 	"github.com/google/uuid"
 	"github.com/sashabaranov/go-openai"
 )
@@ -55,11 +54,7 @@ func (s *chatMessageService) SaveQuestionDOFromChatMessage(ip string, chatMessag
 
 func (s *chatMessageService) initChatMessage(chatMessageDO *model.ChatMessage, chatProcessRequest request.ChatProcessRequest, apiTypeEnum enum.ApiTypeEnum) error {
 	*chatMessageDO = model.ChatMessage{
-		Model: common.Model{Id: uint64(func() int64 {
-			snowNode, _ := snowflake.NewNode(1)
-			id := snowNode.Generate().Int64()
-			return id
-		}())},
+		Model:            common.Model{Id: utils.GetSnowIdUint64()},
 		MessageId:        uuid.New().String(),
 		ConversationId:   uuid.New().String(),
 		MessageType:      enum.QUESTION,

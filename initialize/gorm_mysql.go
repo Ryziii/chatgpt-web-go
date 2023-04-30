@@ -2,9 +2,8 @@ package initialize
 
 import (
 	"chatgpt-web-go/global"
-	model "chatgpt-web-go/model/api/user"
+	"chatgpt-web-go/utils"
 	"fmt"
-	"github.com/bwmarrin/snowflake"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -38,7 +37,7 @@ func InitGormMysql() {
 	if err != nil {
 		fmt.Println(err)
 	}
-	global.Gdb.AutoMigrate(&model.User{})
+	//global.Gdb.AutoMigrate(&model.User{})
 	dbConfig, _ := global.Gdb.DB()
 	dbConfig.SetMaxIdleConns(10)
 	dbConfig.SetMaxOpenConns(100)
@@ -51,8 +50,7 @@ func registerCallbacks() {
 func updateTimeStampForCreateCallback(db *gorm.DB) {
 	if db.Error == nil && db.Statement.Schema != nil {
 		if idValue, ok := db.Statement.ReflectValue.FieldByName("Id").Interface().(uint64); ok && idValue == 0 {
-			node, _ := snowflake.NewNode(1)
-			db.Statement.SetColumn("Id", node.Generate().Int64())
+			db.Statement.SetColumn("Id", utils.GetSnowIdUint64())
 		}
 		db.Statement.SetColumn("UpdateTime", time.Now().Format("2006-01-02 15:04:05"))
 		db.Statement.SetColumn("CreateTime", time.Now().Format("2006-01-02 15:04:05"))

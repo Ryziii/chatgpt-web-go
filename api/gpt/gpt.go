@@ -21,7 +21,7 @@ import (
 	"net/http"
 )
 
-func GPT(c *gin.Context) {
+func ChatConversationProcess(c *gin.Context) {
 	c.Header("Content-type", "application/octet-stream")
 	var req request.ChatProcessRequest
 	if err := c.BindJSON(&req); err != nil {
@@ -29,15 +29,16 @@ func GPT(c *gin.Context) {
 		return
 	}
 
-	// 组装chatCompletionMessages
 	chatMessageService := gpt.NewChatMessageService()
+
+	// 组装chatCompletionMessages
 	chatMessageDO, completionRequest, err := chatMessageService.GetOpenAiRequestReady(req)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusOK, result.Fail.WithMessage(err.Error()))
 		return
 	}
 
-	// TODO 将此步骤放入service
+	// TODO 将此步骤放入
 	numTokens := utils.NumTokensFromMessages(completionRequest.Messages, openai.GPT3Dot5Turbo)
 	if numTokens+global.Cfg.GPT.MaxToken > 4000 {
 		c.AbortWithStatusJSON(http.StatusOK, result.Fail.WithMessage("上文聊天记录已超限, 请新建聊天或不携带聊天记录"))
@@ -154,4 +155,15 @@ func GPT(c *gin.Context) {
 			responseCount++
 		}
 	})
+}
+
+func AddChatRoom(c *gin.Context) {
+	chatRoomService := gpt.NewChatRoomService()
+	if room, err := chatRoomService.CreateChatRoom(); err != nil {
+		c.AbortWithStatusJSON(http.StatusOK, result.Fail.WithMessage(err.Error()))
+		return
+	} else {
+		c.JSON(http.StatusOK, result.OK.WithData(room))
+		return
+	}
 }

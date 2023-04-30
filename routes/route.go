@@ -14,7 +14,8 @@ func InitApiRoutes() *gin.Engine {
 	apiRoutes.Use(middleware2.JWTAuth()).Use(middleware2.UnauthorizedHandler())
 	{
 		apiRoutes.POST("/login", auth.Login)
-		apiRoutes.POST("/chat-process", gpt.GPT)
+		apiRoutes.POST("/chat-process", gpt.ChatConversationProcess)
+		apiRoutes.POST("/add-chat-room", gpt.AddChatRoom)
 		apiRoutes.POST("/logout", auth.Logout)
 		apiRoutes.POST("/usage", user.GetUsage)
 		apiRoutes.POST("/config", user.GetConfig)

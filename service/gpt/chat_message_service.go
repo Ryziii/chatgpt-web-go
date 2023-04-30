@@ -100,7 +100,7 @@ func (s *chatMessageService) populateInitParentMessage(chatMessageDO *model.Chat
 		chatMessageDO.QuestionContextCount = parentChatMessage.QuestionContextCount + 1
 	} else {
 		chatr := NewChatRoomService()
-		chatRoomDO, err := chatr.CreateChatRoom(chatMessageDO)
+		chatRoomDO, err := chatr.CreateChatRoomByChatMessage(chatMessageDO)
 		if err != nil {
 			return err
 		}

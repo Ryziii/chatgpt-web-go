@@ -11,14 +11,15 @@ import (
 )
 
 type ChatRoomService interface {
-	CreateChatRoom(chatMessageDO *gpt2.ChatMessage) (gpt2.ChatRoom, error)
+	CreateChatRoomByChatMessage(chatMessageDO *gpt2.ChatMessage) (gpt2.ChatRoom, error)
+	CreateChatRoom() (gpt2.ChatRoom, error)
 }
 
 type chatRoomService struct {
 	chatRoomRepo repository.ChatRoomRepository
 }
 
-func (s *chatRoomService) CreateChatRoom(chatMessageDO *gpt2.ChatMessage) (gpt2.ChatRoom, error) {
+func (s *chatRoomService) CreateChatRoomByChatMessage(chatMessageDO *gpt2.ChatMessage) (gpt2.ChatRoom, error) {
 	chatRoom := gpt2.ChatRoom{
 		ApiType:            chatMessageDO.APIType,
 		IP:                 "",
@@ -35,6 +36,16 @@ func (s *chatRoomService) CreateChatRoom(chatMessageDO *gpt2.ChatMessage) (gpt2.
 	if err != nil {
 		global.Gzap.Error("CreateChatRoom", zap.Error(err))
 		return gpt2.ChatRoom{}, errors.New("系统内部错误, 请联系管理员")
+	}
+
+	return chatRoom, nil
+}
+func (s *chatRoomService) CreateChatRoom() (gpt2.ChatRoom, error) {
+	chatRoom := gpt2.ChatRoom{}
+
+	if err := s.chatRoomRepo.CreateChatRoom(&chatRoom); err != nil {
+		global.Gzap.Error("CreateChatRoom", zap.Error(err))
+		return gpt2.ChatRoom{}, errors.New("新建聊天失败, 系统内部错误, 请联系管理员")
 	}
 
 	return chatRoom, nil

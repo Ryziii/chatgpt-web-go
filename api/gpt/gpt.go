@@ -2,14 +2,14 @@ package gpt
 
 import (
 	"chatgpt-web-go/global"
-	gpt2 "chatgpt-web-go/global/enum/gpt"
+	enum "chatgpt-web-go/global/enum/gpt"
 	gptmodel "chatgpt-web-go/model/api/gpt"
 	"chatgpt-web-go/model/api/gpt/request"
 	models "chatgpt-web-go/model/api/gpt/response"
 	result "chatgpt-web-go/model/common/response"
 	"chatgpt-web-go/repository"
 	"chatgpt-web-go/service/gpt"
-	utils2 "chatgpt-web-go/utils"
+	utils "chatgpt-web-go/utils"
 	"context"
 	"encoding/json"
 	"errors"
@@ -37,12 +37,44 @@ func GPT(c *gin.Context) {
 		return
 	}
 
-	// 计算token是否超限
-	numTokens := utils2.NumTokensFromMessages(completionRequest.Messages, openai.GPT3Dot5Turbo)
+	// TODO 将此步骤放入service
+	numTokens := utils.NumTokensFromMessages(completionRequest.Messages, openai.GPT3Dot5Turbo)
 	if numTokens+global.Cfg.GPT.MaxToken > 4000 {
 		c.AbortWithStatusJSON(http.StatusOK, result.Fail.WithMessage("上文聊天记录已超限, 请新建聊天或不携带聊天记录"))
 		return
 	}
+
+	if err := chatMessageService.SaveQuestionDOFromChatMessageDO(c.RemoteIP(), chatMessageDO, completionRequest); err != nil {
+		c.AbortWithStatusJSON(http.StatusOK, result.Fail.WithMessage(err.Error()))
+		return
+	}
+	// 存入request
+	chatMessageRepo := repository.NewChatMessageRepository()
+	var questionDO gptmodel.ChatMessageDO
+	var answerDO gptmodel.ChatMessageDO
+	if err := utils.DeepCopyByJson(&chatMessageDO, &questionDO); err != nil {
+		c.AbortWithStatusJSON(http.StatusOK, result.Fail.WithMessage(err.Error()))
+		return
+	}
+	if err := utils.DeepCopyByJson(&chatMessageDO, &answerDO); err != nil {
+		c.AbortWithStatusJSON(http.StatusOK, result.Fail.WithMessage(err.Error()))
+		return
+	}
+	questionDO.IP = c.ClientIP()
+	questionDO.OriginalData = func() string {
+		jsonV, _ := json.Marshal(completionRequest)
+		return string(jsonV)
+	}()
+	questionDO.PromptTokens = numTokens
+	questionDO.Status = enum.PART_SUCCESS
+	questionDO.MessageType = enum.QUESTION
+	questionDO.ParentAnswerMessageID = questionDO.ParentMessageID
+
+	answerDO.ID = uint64(utils.GetSnowIdInt64())
+	answerDO.MessageID = uuid.New().String()
+	answerDO.ParentMessageID = questionDO.MessageID
+	answerDO.ParentQuestionMessageID = questionDO.MessageID
+	chatMessageRepo.CreateChatMessage(&questionDO)
 
 	// 流式输出
 	stream, err := global.GPTClient.CreateChatCompletionStream(context.Background(), completionRequest)
@@ -53,43 +85,6 @@ func GPT(c *gin.Context) {
 	defer stream.Close()
 	resText := ""
 	responseCount := 0
-
-	// 第一次生成messageId和conversationId uuid
-	if chatMessageDO.MessageID == "" {
-		chatMessageDO.MessageID = uuid.New().String()
-	}
-	if chatMessageDO.ConversationID == "" {
-		chatMessageDO.ConversationID = uuid.New().String()
-	}
-
-	// 存入request
-	chatMessageRepo := repository.NewChatMessageRepository()
-	var questionDO gptmodel.ChatMessageDO
-	var answerDO gptmodel.ChatMessageDO
-	if err := utils2.DeepCopyByJson(&chatMessageDO, &questionDO); err != nil {
-		c.AbortWithStatusJSON(http.StatusOK, result.Fail.WithMessage(err.Error()))
-		return
-	}
-	if err := utils2.DeepCopyByJson(&chatMessageDO, &answerDO); err != nil {
-		c.AbortWithStatusJSON(http.StatusOK, result.Fail.WithMessage(err.Error()))
-		return
-	}
-	questionDO.IP = c.ClientIP()
-	questionDO.OriginalData = func() string {
-		jsonV, _ := json.Marshal(completionRequest)
-		return string(jsonV)
-	}()
-	questionDO.PromptTokens = numTokens
-	questionDO.Status = gpt2.PART_SUCCESS
-	questionDO.MessageType = gpt2.QUESTION
-	questionDO.ParentAnswerMessageID = questionDO.ParentMessageID
-
-	answerDO.ID = uint64(utils2.GetSnowIdInt64())
-	answerDO.MessageID = uuid.New().String()
-	answerDO.ParentMessageID = questionDO.MessageID
-	answerDO.ParentQuestionMessageID = questionDO.MessageID
-	chatMessageRepo.CreateChatMessage(&questionDO)
-
 	c.Stream(func(w io.Writer) bool {
 		for {
 			response, err := stream.Recv()
@@ -97,10 +92,10 @@ func GPT(c *gin.Context) {
 
 				//存入response
 				answerDO.Content = resText
-				answerDO.MessageType = gpt2.ANSWER
-				answerDO.Status = gpt2.COMPLETE_SUCCESS
+				answerDO.MessageType = enum.ANSWER
+				answerDO.Status = enum.COMPLETE_SUCCESS
 				answerDO.PromptTokens = numTokens
-				answerDO.CompletionTokens = utils2.NumTokensFromText(resText, openai.GPT3Dot5Turbo)
+				answerDO.CompletionTokens = utils.NumTokensFromText(resText, openai.GPT3Dot5Turbo)
 				answerDO.TotalTokens = answerDO.PromptTokens + answerDO.CompletionTokens
 
 				if response.Choices != nil {
@@ -119,7 +114,7 @@ func GPT(c *gin.Context) {
 					answerDO.OriginalData = string(jsonV)
 				}
 
-				questionDO.Status = gpt2.COMPLETE_SUCCESS
+				questionDO.Status = enum.COMPLETE_SUCCESS
 
 				chatMessageRepo.UpdateChatMessage(&questionDO)
 				err := chatMessageRepo.CreateChatMessage(&answerDO)

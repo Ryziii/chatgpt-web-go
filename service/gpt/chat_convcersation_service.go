@@ -3,6 +3,7 @@ package gpt
 import (
 	"chatgpt-web-go/model/api/gpt"
 	"chatgpt-web-go/model/api/gpt/request"
+	"chatgpt-web-go/model/common"
 	"chatgpt-web-go/repository"
 	"chatgpt-web-go/utils"
 	"strconv"
@@ -20,7 +21,7 @@ type chatConversationService struct {
 }
 
 func (s *chatConversationService) GetConversationById(id uint64, con *gpt.ChatConversation) error {
-	return s.chatConversationRepo.GetChatConversationById(con, id)
+	return s.chatConversationRepo.GetOne(con, gpt.ChatConversation{Model: common.Model{Id: id}})
 }
 
 func NewChatConversationService() ChatConversationService {

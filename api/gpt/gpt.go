@@ -29,10 +29,10 @@ func ChatConversationProcess(c *gin.Context) {
 	}
 
 	chatMessageService := gpt.NewChatMessageService()
-
 	chatConversationService := gpt.NewChatConversationService()
-	chatConversation := new(model.ChatConversation)
+
 	// 通过Conversation来判断是否是新的会话,获取会话
+	chatConversation := new(model.ChatConversation)
 	if err := chatConversationService.InitChatConversation(chatConversation, req); err != nil {
 		c.AbortWithStatusJSON(http.StatusOK, result.Fail.WithMessage(err.Error()).WithData(err))
 		return
@@ -65,6 +65,7 @@ func AddChatRoom(c *gin.Context) {
 		return
 	}
 }
+
 func saveAnswer(chatConversation *model.ChatConversation, chatConversationService *gpt.ChatConversationService, chatMessageService *gpt.ChatMessageService, response openai.ChatCompletionStreamResponse, status enum.ChatMessageStatusEnum, resText string, c *gin.Context) {
 	chatConversation.Answer.Content = resText
 	chatConversation.Answer.Status = status

@@ -49,4 +49,5 @@ type GPT struct {
 	Temperature    float32 `mapstructure:"temperature"`
 	MaxToken       int     `mapstructure:"max_token"`
 	OpenAIAPIMODEL string  `mapstructure:"openai_api_model"`
+	RecurveTimes   int     `mapstructure:"recurve_times"`
 }

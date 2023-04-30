@@ -22,48 +22,56 @@ type chatConversationRepository struct {
 }
 
 func NewChatConversationRepository() ChatConversationRepository {
-	return &chatConversationRepository{db: global.Gdb.Model(&gpt.ChatConversation{})}
+	return &chatConversationRepository{db: global.Gdb}
 }
 
 func (r *chatConversationRepository) GetOne(result *gpt.ChatConversation, source gpt.ChatConversation) error {
-	return r.db.
+	var res = gpt.ChatConversation{}
+	if err := r.db.Model(gpt.ChatConversation{}).
 		Preload("Question").
 		Preload("Answer").
 		Preload("ChatRoom").
-		Where(source).First(result).Error
+		Where(source).First(&res).Error; err != nil {
+		return err
+	}
+	*result = res
+	return nil
 }
 
 func (r *chatConversationRepository) CreateChatConversation(chatConversation *gpt.ChatConversation) error {
-	return r.db.Create(chatConversation).Error
+	return r.db.Model(gpt.ChatConversation{}).Create(chatConversation).Error
 }
 
 func (r *chatConversationRepository) UpdateChatConversation(chatConversation *gpt.ChatConversation) error {
-	return r.db.Updates(chatConversation).Error
+	return r.db.Model(gpt.ChatConversation{}).Updates(chatConversation).Error
 }
 
 func (r *chatConversationRepository) DeleteChatConversation(chatConversation *gpt.ChatConversation) error {
-	return r.db.Delete(chatConversation).Error
+	return r.db.Model(gpt.ChatConversation{}).Delete(chatConversation).Error
 }
 
 func (r *chatConversationRepository) GetChatConversationById(chatConversation *gpt.ChatConversation, id uint64) error {
-	var result gpt.ChatConversation
-	if err := r.db.
-		Preload("Question").
-		Preload("Answer").
-		Preload("ChatRoom").
-		Where("id = ?", id).
-		First(&result).Error; err != nil {
+	result := &gpt.ChatConversation{}
+	query := r.db.Model(gpt.ChatConversation{}).Preload("Question").Preload("Answer").Preload("ChatRoom")
+	query = query.Where("id = ?", id)
+
+	if err := query.First(result).Error; err != nil {
 		global.Gzap.Error("GetChatConversationById error", zap.Error(err))
 		return errors.New("系统内部错误, 请联系管理员")
 	}
-	*chatConversation = result
+	*chatConversation = *result
 	return nil
 }
 
 func (r *chatConversationRepository) GetChatConversationByQuery(chatConversation *gpt.ChatConversation, query map[string]interface{}) error {
-	return r.db.
+	var result gpt.ChatConversation
+	if err := r.db.Model(gpt.ChatConversation{}).
 		Preload("Question").
 		Preload("Answer").
 		Preload("ChatRoom").
-		Where(query).First(chatConversation).Error
+		Where(query).First(&result).Error; err != nil {
+		return err
+	}
+	*chatConversation = result
+	return nil
 }

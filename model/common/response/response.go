@@ -27,6 +27,14 @@ func NewResponse(code int, msg string) *Response {
 		Status:  "Success",
 	}
 }
+func FailResponse(code int, msg string) *Response {
+	return &Response{
+		Code:    code,
+		Data:    nil,
+		Message: msg,
+		Status:  "Fail",
+	}
+}
 
 func (r *Response) ToString() string {
 	raw, _ := json.Marshal(r)

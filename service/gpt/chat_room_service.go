@@ -21,10 +21,8 @@ type chatRoomService struct {
 
 func (s *chatRoomService) CreateChatRoomByChatMessage(chatMessageDO *model.ChatMessage) (model.ChatRoom, error) {
 	chatRoom := model.ChatRoom{
-		ApiType:            chatMessageDO.APIType,
 		IP:                 "",
 		FirstChatMessageId: chatMessageDO.Id,
-		ConversationId:     chatMessageDO.ConversationId,
 		FirstMessageId:     uuid.New().String(),
 		Title: func() string {
 			ru := []rune(chatMessageDO.Content)

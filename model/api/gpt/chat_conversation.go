@@ -6,13 +6,17 @@ import (
 
 type ChatConversation struct {
 	common.Model
-	QuestionId uint64
-	Question   *ChatMessage `json:"-" gorm:"foreignKey:QuestionId;references:Id"`
-	AnswerId   uint64
-	Answer     *ChatMessage `json:"-" gorm:"foreignKey:AnswerId;references:Id"`
-	ChatRoomId uint64
-	ChatRoom   *ChatRoom `json:"-" gorm:"foreignKey:ChatRoomId;references:Id"`
-	ParentId   uint64    `gorm:"column:parent_conversation_id"`
+	QuestionId       uint64
+	Question         *ChatMessage `json:"-" gorm:"foreignKey:QuestionId;references:Id"`
+	AnswerId         uint64
+	Answer           *ChatMessage `json:"-" gorm:"foreignKey:AnswerId;references:Id"`
+	ChatRoomId       uint64
+	ChatRoom         *ChatRoom `json:"-" gorm:"foreignKey:ChatRoomId;references:Id"`
+	ParentId         uint64    `gorm:"column:parent_conversation_id"`
+	ContextCount     int
+	QuestionUseToken int
+	AnswerUseToken   int
+	TotalTokens      int
 }
 
 func (ChatConversation) TableName() string {

@@ -3,6 +3,8 @@ package repository
 import (
 	"chatgpt-web-go/global"
 	"chatgpt-web-go/model/api/gpt"
+	"errors"
+	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
 
@@ -44,14 +46,17 @@ func (r *chatConversationRepository) DeleteChatConversation(chatConversation *gp
 }
 
 func (r *chatConversationRepository) GetChatConversationById(chatConversation *gpt.ChatConversation, id uint64) error {
+	var result gpt.ChatConversation
 	if err := r.db.
 		Preload("Question").
 		Preload("Answer").
 		Preload("ChatRoom").
 		Where("id = ?", id).
-		First(chatConversation).Error; err != nil {
-		return err
+		First(&result).Error; err != nil {
+		global.Gzap.Error("GetChatConversationById error", zap.Error(err))
+		return errors.New("系统内部错误, 请联系管理员")
 	}
+	*chatConversation = result
 	return nil
 }
 

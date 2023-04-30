@@ -28,7 +28,7 @@ func NewChatConversationService() ChatConversationService {
 }
 func (s *chatConversationService) InitChatConversation(conversation *gpt.ChatConversation, req request.ChatProcessRequest) error {
 	// 一刀切，conversationId为空或转换失败，视为没有父对话
-	conversationId, _ := strconv.ParseUint(req.Options.ConversationId, 10, 64)
+	conversationId, _ := strconv.ParseUint(req.Options.ParentMessageId, 10, 64)
 	if conversationId == 0 {
 		chatRoom, _ := s.chatRoomService.CreateChatRoom()
 		conversation.ChatRoomId = chatRoom.Id
@@ -45,8 +45,13 @@ func (s *chatConversationService) InitChatConversation(conversation *gpt.ChatCon
 	conversation.AnswerId = utils.GetSnowIdUint64()
 	conversation.Question = nil
 	conversation.Answer = nil
+	conversation.ContextCount++
 	return nil
 }
 func (s *chatConversationService) CreateConversation(chatConversation *gpt.ChatConversation) error {
+	chatConversation.ContextCount++
+	chatConversation.QuestionUseToken = chatConversation.Question.TotalTokens
+	chatConversation.AnswerUseToken = chatConversation.Answer.TotalTokens
+	chatConversation.TotalTokens += chatConversation.AnswerUseToken + chatConversation.QuestionUseToken
 	return s.chatConversationRepo.CreateChatConversation(chatConversation)
 }

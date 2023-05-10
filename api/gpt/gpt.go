@@ -88,11 +88,11 @@ func saveAnswer(chatConversation *model.ChatConversation, chatConversationServic
 	}
 
 	if err := (*chatMessageService).UpdateChatMessage(chatConversation.Answer); err != nil {
-		global.Gzap.Error("chatMessageRepo.CreateChatMessage", zap.Error(err))
+		global.Gzap.Error("chatMessageRepo.UpdateChatMessage", zap.Error(err))
 		c.AbortWithStatusJSON(http.StatusOK, result.Fail.WithMessage(err.Error()))
 	}
 	if err := (*chatConversationService).CreateConversation(chatConversation); err != nil {
-		global.Gzap.Error("chatMessageRepo.CreateChatMessage", zap.Error(err))
+		global.Gzap.Error("chatMessageRepo.CreateConversation", zap.Error(err))
 		c.AbortWithStatusJSON(http.StatusOK, result.Fail.WithMessage(err.Error()))
 	}
 }

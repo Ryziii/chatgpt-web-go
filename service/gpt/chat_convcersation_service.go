@@ -28,7 +28,9 @@ func NewChatConversationService() ChatConversationService {
 	return &chatConversationService{chatConversationRepo: repository.NewChatConversationRepository(), chatRoomService: NewChatRoomService()}
 }
 func (s *chatConversationService) InitChatConversation(conversation *gpt.ChatConversation, req request.ChatProcessRequest) error {
-	// 一刀切，conversationId为空或转换失败，视为没有父对话
+	// 创建一个新的对话：一刀切，ParentMessageId 为空或转换失败，视为没有父对话
+	// 如果没有父对话，【新对话】创建一个新的聊天室，其他一切为初始值
+	// 如果有父对话，【新对话】的父ID为父对话ID，查找并使用父对话的聊天室、token等，其他一切为初始值
 	conversationId, _ := strconv.ParseUint(req.Options.ParentMessageId, 10, 64)
 	if conversationId == 0 {
 		chatRoom, _ := s.chatRoomService.CreateChatRoom()

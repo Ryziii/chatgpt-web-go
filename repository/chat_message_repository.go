@@ -31,7 +31,7 @@ func (r *chatMessageRepository) CreateChatMessage(chatMessage *gpt.ChatMessage) 
 }
 
 func (r *chatMessageRepository) UpdateChatMessage(chatMessage *gpt.ChatMessage) error {
-	return r.db.Model(gpt.ChatMessage{}).Updates(chatMessage).Error
+	return r.db.Model(chatMessage).Updates(chatMessage).Error
 }
 
 func (r *chatMessageRepository) DeleteChatMessage(chatMessage *gpt.ChatMessage) error {

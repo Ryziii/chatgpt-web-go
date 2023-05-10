@@ -43,7 +43,7 @@ func (r *chatConversationRepository) CreateChatConversation(chatConversation *gp
 }
 
 func (r *chatConversationRepository) UpdateChatConversation(chatConversation *gpt.ChatConversation) error {
-	return r.db.Model(gpt.ChatConversation{}).Updates(chatConversation).Error
+	return r.db.Model(chatConversation).Updates(chatConversation).Error
 }
 
 func (r *chatConversationRepository) DeleteChatConversation(chatConversation *gpt.ChatConversation) error {

@@ -29,3 +29,5 @@ gpt:
   systemMessage: ""
   maxToken: 10
   openai_api_model: ""
+  recurve_times: 7
+  base_url: "https://api.openai-sb.com/v1"

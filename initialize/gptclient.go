@@ -6,5 +6,7 @@ import (
 )
 
 func InitGPT() {
-	global.GPTClient = openai.NewClient(global.Cfg.GPT.Token)
+	config := openai.DefaultConfig(global.Cfg.GPT.Token)
+	config.BaseURL = global.Cfg.GPT.BaseURL
+	global.GPTClient = openai.NewClientWithConfig(config)
 }

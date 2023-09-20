@@ -50,4 +50,5 @@ type GPT struct {
 	MaxToken       int     `mapstructure:"max_token"`
 	OpenAIAPIMODEL string  `mapstructure:"openai_api_model"`
 	RecurveTimes   int     `mapstructure:"recurve_times"`
+	BaseURL        string  `mapstructure:"base_url"`
 }
